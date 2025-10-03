@@ -14,16 +14,16 @@ core = Core()
 app = FastAPI(title="Hackwerk 2025 API", version="1.0.0")
 
 origins = [
-    "http://localhost:3000/",
-    "http://127.0.0.1:3000/",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
 ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=[""],   # This is key — it tells FastAPI to respond to OPTIONS too
-    allow_headers=[""],
+    allow_methods=["*"],  # Allow all HTTP methods
+    allow_headers=["*"],  # Allow all headers
 )
 
 @app.get("/")

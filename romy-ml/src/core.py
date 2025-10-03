@@ -8,14 +8,10 @@ from faiss_vectordb import FaissVectorDB
 from dotenv import load_dotenv
 from model import Model
 
-load_dotenv()
-
 class Core:
     def __init__(self):
         self.embedding_model = EmbeddingModel()
-        vectordb_path = os.path.join(os.getcwd(), "data", "vectordb")
-        self.faiss_vectordb = FaissVectorDB.load(vectordb_path)
-        # Use OpenRouter with any model you want
+        self.faiss_vectordb = FaissVectorDB.load(os.getcwd() + "/data/vectordb")
         self.model = Model("openrouter", "anthropic/claude-3.5-sonnet")
 
     def get_passages(self) -> List[Dict[str, Any]]:
@@ -55,9 +51,3 @@ class Core:
     def get_conversation_history(self, user_id: str) -> list[dict[str, str]]:
         """Get conversation history for a specific user/thread ID"""
         return self.model.get_conversation_history(user_id)
-
-if __name__ == "__main__":
-    import asyncio
-    core = Core()
-    result = asyncio.run(core.process_query("wat is phishing", "test_user"))
-    print(result)

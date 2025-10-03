@@ -13,7 +13,7 @@ class EmbeddingModel:
         model: str = "text-embedding-3-large",
         dimensions: Optional[int] = None,
         enable_cache: bool = True,
-    ):
+    ) -> None:
         self.model = model
         self.enable_cache = enable_cache
         self._cache: Dict[str, np.ndarray] = {}
@@ -66,7 +66,6 @@ class EmbeddingModel:
                 batch_to_embed.append(text)
                 batch_indices.append(j)
             
-            # API call for uncached texts
             if batch_to_embed:
                 response = await self.client.embeddings.create(
                     input=batch_to_embed,

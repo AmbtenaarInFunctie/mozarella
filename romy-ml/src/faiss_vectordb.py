@@ -229,6 +229,7 @@ class FaissVectorDB:
 async def main():
     """Example usage - uncomment to test building the database"""
     from core import Core
+    
     core = Core()
     passages = core.get_passages()
     
