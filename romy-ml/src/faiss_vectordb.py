@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 from typing import Any, Dict, List, Optional, Sequence, Union
@@ -225,27 +226,36 @@ class FaissVectorDB:
 
         return instance
 
-if __name__ == "__main__":
-    # Example usage - uncomment to test building the database
-    # from core import Core
-    # core = Core()
-    # passages = core.get_passages()
+async def main():
+    """Example usage - uncomment to test building the database"""
+    from core import Core
+    core = Core()
+    passages = core.get_passages()
     
-    # embedding_model = EmbeddingModel()
-    # embeddings = embedding_model.embed_batch([passage["meta"]["metadata:title"] for passage in passages])
-    # ids = [str(id) for id in range(len(passages))]
-    # contents = [passage["text"] for passage in passages]
-    # metadatas = [passage["meta"] for passage in passages]
+    # Filter out passages with empty or None titles, and ensure titles are strings
+    valid_passages = []
+    for passage in passages:
+        title = passage["meta"].get("metadata:title")
+        if title and isinstance(title, str) and title.strip():
+            valid_passages.append(passage)
     
-    # vectordb = FaissVectorDB(dim=3072, metric="cosine")
-    # vectordb.add_embeddings(embeddings, ids, contents=contents, metadatas=metadatas)
-    # vectordb.save(os.getcwd() + "/data/vectordb")
+    print(f"Total passages: {len(passages)}, Valid passages with titles: {len(valid_passages)}")
+    
+    embedding_model = EmbeddingModel()
+    embeddings = await embedding_model.embed_batch([passage["meta"]["metadata:title"] for passage in valid_passages])
+    ids = [str(passage["id"]) for passage in valid_passages]
+    contents = [passage["text"] for passage in valid_passages]
+    metadatas = [passage["meta"] for passage in valid_passages]
+    
+    vectordb = FaissVectorDB(dim=3072, metric="cosine")
+    vectordb.add_embeddings(embeddings, ids, contents=contents, metadatas=metadatas)
+    vectordb.save(os.getcwd() + "/data/vectordb")
     
     # Search example
     embedding_model = EmbeddingModel()
     vectordb = FaissVectorDB.load(os.getcwd() + "/data/vectordb")
 
-    query_embeddings = embedding_model.embed_text("wat is phishing")
+    query_embeddings = await embedding_model.embed_text("wat is phishing")
     results = vectordb.search(query_embeddings, k=5)
     
     # Display results with content
@@ -260,3 +270,6 @@ if __name__ == "__main__":
                 print(f"   URL: {result.metadata.get('metadata:original_url', 'N/A')}")
             if result.content:
                 print(f"   Content Preview: {result.content[:200]}...")  # First 200 chars
+
+if __name__ == "__main__":
+    asyncio.run(main())

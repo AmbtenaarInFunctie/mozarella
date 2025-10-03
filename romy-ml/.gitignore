@@ -8,6 +8,15 @@ __pycache__/
 # C extensions
 *.so
 
+# Python cache directories
+/__pycache__/
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+
 # Distribution / packaging
 .Python
 build/
@@ -59,6 +68,7 @@ cover/
 
 # Django stuff:
 *.log
+logs/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal

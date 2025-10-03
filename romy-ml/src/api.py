@@ -1,5 +1,4 @@
 from fastapi import FastAPI, Header
-from pydantic import BaseModel
 import uvicorn
 from typing import Optional
 from structures import QueryRequest, QueryResponse
