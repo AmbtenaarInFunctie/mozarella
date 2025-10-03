@@ -6,10 +6,10 @@ body {
     background: #fff url('../romy-frontend/src/styles/img/ro-logo.svg') no-repeat center top;
     color: #3b3b3b;
     font-family: RijksSansRegular, sans-serif;
+    /* max-height: 100vh;
+    overflow-y: hidden; */
 }
 main {
-    background: #fff url('../romy-frontend/src/styles/img/romy.svg') no-repeat center;
-    /* height: 100vh; */
     text-align: center;
 }
 h1 {
