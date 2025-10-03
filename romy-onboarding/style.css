@@ -6,8 +6,8 @@ body {
     background: #fff url('../romy-frontend/src/styles/img/ro-logo.svg') no-repeat center top;
     color: #3b3b3b;
     font-family: RijksSansRegular, sans-serif;
-    /* max-height: 100vh;
-    overflow-y: hidden; */
+    height: 100vh;
+    overflow-y: hidden;
 }
 main {
     text-align: center;
@@ -19,4 +19,19 @@ h1 {
 p {
     font-size: 1.5em;
     margin-top: 16px;
+}
+[type=submit] {
+    background-color: #01689b;
+    border: 0;
+    border-radius: 16px;
+    bottom: 32px;
+    /* box-shadow: #3b3b3b 0 2px 4px; */
+    color: #fff;
+    font: inherit;
+    font-size: 24px;
+    margin: 0 auto;
+    outline: 48px solid #fff;
+    padding: 12px 24px;
+    position: absolute;
+    right: 32px;
 }
