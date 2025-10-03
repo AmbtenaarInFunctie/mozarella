@@ -53,7 +53,7 @@ async def process_query(request: QueryRequest, x_user_id: Optional[str] = Header
     )
 
 @app.get("/history/{user_id}", response_model=ConversationHistoryResponse)
-async def get_conversation_history(x_user_id: str):
+async def get_conversation_history(user_id: str):
     """
     Get conversation history for a specific user/thread ID.
     
@@ -61,7 +61,7 @@ async def get_conversation_history(x_user_id: str):
     for each user (5 user messages and 5 assistant responses).
     Citations are included in assistant messages when available.
     """
-    history = core.get_conversation_history(x_user_id)
+    history = core.get_conversation_history(user_id)
     
     # Convert history to Message objects, including citations if present
     messages = []
