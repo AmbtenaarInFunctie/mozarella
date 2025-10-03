@@ -23,71 +23,107 @@ const fetchAIResponse = async (message: string) => {
   }
 };
 
-const getHistory = async (id: string) => {
+type HistoryMessage = {
+  role: string;
+  content: string;
+  citations: any[] | null;
+};
+
+type HistoryResponse = {
+  user_id: string;
+  messages: HistoryMessage[];
+  total_messages: number;
+  status: string;
+};
+
+const getHistory = async (id: string): Promise<HistoryResponse | null> => {
   const response = await mlClient.GET("/history/{user_id}", {
-    params: { path: { user_id: id! } },
+    params: { path: { user_id: id } } as any,
   });
   console.log(response);
   if (response.data) {
-    return response.data;
+    return response.data as HistoryResponse;
   } else {
-    return {};
+    return null;
   }
 };
 
 export default function Home() {
-  const existingIds = JSON.parse(localStorage.getItem("existingIds") || "[]");
+  const [chats, setChats] = useState<{ id: string; messages: ChatMessage[] }[]>([]);
+  const [selectedChat, setSelectedChat] = useState("");
+  const [isClient, setIsClient] = useState(false);
 
-  const initialChats =
-    existingIds && existingIds.length > 0
-      ? existingIds.map((id: string) => ({ id, messages: [] }))
-      : [
-          {
-            id: uuid(),
-            messages: [],
-          },
-        ];
+  // Initialize chats from localStorage on client mount
+  useEffect(() => {
+    setIsClient(true);
+    const storedChats = localStorage.getItem("chats");
+    
+    if (storedChats) {
+      const parsedChats = JSON.parse(storedChats);
+      if (parsedChats && parsedChats.length > 0) {
+        setChats(parsedChats);
+        setSelectedChat(parsedChats[0].id);
+      } else {
+        // Create initial chat if none exist
+        const newId = uuid();
+        const initialChat = [{ id: newId, messages: [] }];
+        setChats(initialChat);
+        setSelectedChat(newId);
+        localStorage.setItem("chats", JSON.stringify(initialChat));
+      }
+    } else {
+      // Create initial chat if none exist
+      const newId = uuid();
+      const initialChat = [{ id: newId, messages: [] }];
+      setChats(initialChat);
+      setSelectedChat(newId);
+      localStorage.setItem("chats", JSON.stringify(initialChat));
+    }
+  }, []);
 
-  const [chats, setChats] =
-    useState<{ id: string; messages: ChatMessage[] }[]>(initialChats);
-  const [selectedChat, setSelectedChat] = useState(initialChats[0].id);
+  // Save chats to localStorage whenever they change
+  useEffect(() => {
+    if (isClient && chats.length > 0) {
+      localStorage.setItem("chats", JSON.stringify(chats));
+    }
+  }, [chats, isClient]);
 
   async function selectChat(id: string) {
     console.log(id);
-    if ((chats.find((x) => x.id === id)?.messages?.length ?? 0) < 0) {
-      const data = getHistory(id);
+    const currentChat = chats.find((x) => x.id === id);
+    
+    // Only load history if chat has no messages yet
+    if ((currentChat?.messages?.length ?? 0) === 0) {
+      const data = await getHistory(id);
 
-      setChats((prev) =>
-        prev.map((chat) =>
-          chat.id === selectedChat
-            ? {
-                ...chat,
-                messages: [
-                  ...chat.messages,
-                  {
-                    id: Date.now(),
-                    role: "assistant",
-                    content: data.response.content,
-                    citations: data.response.citations,
-                  },
-                ],
-              }
-            : chat
-        )
-      );
+      if (data && data.messages && Array.isArray(data.messages)) {
+        // Transform history messages to ChatMessage format
+        const transformedMessages = data.messages.map((msg, index) => ({
+          id: Date.now() + index,
+          role: msg.role,
+          content: msg.content,
+          citations: msg.citations || [],
+        }));
 
-      setSelectedChat(element.id);
+        setChats((prev) =>
+          prev.map((chat) =>
+            chat.id === id
+              ? {
+                  ...chat,
+                  messages: transformedMessages,
+                }
+              : chat
+          )
+        );
+      }
     }
+    
+    setSelectedChat(id);
   }
 
   function createNewChat() {
     const newId = uuid();
     setChats((prev) => [{ id: newId, messages: [] }, ...prev]);
-
-    const existingIds = JSON.parse(localStorage.getItem("existingIds") || "[]");
-    existingIds.push(newId);
-    localStorage.setItem("existingIds", JSON.stringify(existingIds));
-
     setSelectedChat(newId);
   }
 
@@ -102,7 +138,7 @@ export default function Home() {
 
   const mutation = useMutation({
     mutationFn: fetchAIResponse,
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       console.log(data);
 
       setChats((prev) =>
@@ -115,8 +151,8 @@ export default function Home() {
                   {
                     id: Date.now(),
                     role: "assistant",
-                    content: data.response.content,
-                    citations: data.response.citations,
+                    content: data.response?.content || "",
+                    citations: data.response?.citations || [],
                   },
                 ],
               }
@@ -143,20 +179,45 @@ export default function Home() {
           : chat
       )
     );
-    setSelectedChat(element.id);
     mutation.mutate(input);
     setInput("");
   };
+
+  // Prevent hydration mismatch by not rendering until client-side
+  if (!isClient || chats.length === 0) {
+    return null;
+  }
 
   return (
     <Row>
       <Col xs={3} className="text-center pt-5 border">
         <Button onClick={createNewChat}>New chat</Button>
-        {chats.map((element) => (
-          <p key={element.id} onClick={() => selectChat(element.id)}>
-            {element.id}
-          </p>
-        ))}
+        {chats.map((element) => {
+          const firstUserMessage = element.messages.find(
+            (msg) => msg.role === "user"
+          );
+          const displayText = firstUserMessage
+            ? firstUserMessage.content.slice(0, 50) + 
+              (firstUserMessage.content.length > 50 ? "..." : "")
+            : "New Chat";
+          
+          return (
+            <p 
+              key={element.id} 
+              onClick={() => selectChat(element.id)}
+              className={`cursor-pointer p-2 ${
+                selectedChat === element.id ? "bg-light fw-bold" : ""
+              }`}
+              style={{ 
+                cursor: "pointer",
+                textAlign: "left",
+                wordBreak: "break-word"
+              }}
+            >
+              {displayText}
+            </p>
+          );
+        })}
       </Col>
       <Col xs={9}>
         <div
