@@ -51,7 +51,7 @@ export default function LoginPage() {
         </h6>
 
         {/* Form */}
-        <form>
+        <form onSubmit={handleLogin}>
           <div className="mb-3">
             <label htmlFor="email" className="form-label fw-semibold">
               Email
