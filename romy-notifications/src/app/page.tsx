@@ -118,7 +118,20 @@ function InstallPrompt() {
     return (
         <div>
             <h3>Install App</h3>
-            <button>Add to Home Screen</button>
+            <button
+                onClick={() => {
+                    if (
+                        typeof window !== "undefined" &&
+                        "beforeinstallprompt" in window
+                    ) {
+                        (window as any).beforeinstallprompt.prompt();
+                    } else {
+                        alert("To install this app, use the browser's menu.");
+                    }
+                }}
+            >
+                Install PWA
+            </button>
             {isIOS && (
                 <p>
                     To install this app on your iOS device, tap the share button

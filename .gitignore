@@ -45,3 +45,4 @@ output
 
 .vscode
 */node_modules
+*/.next

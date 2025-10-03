@@ -1,34 +1,38 @@
 {
-  "name": "mozerella",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
-    "start": "next start",
-    "lint": "eslint"
-  },
-  "dependencies": {
-    "@tanstack/react-query": "^5.90.2",
-    "bootstrap": "^5.3.8",
-    "framer-motion": "^12.23.22",
-    "next": "15.5.4",
-    "react": "19.1.0",
-    "react-bootstrap": "^2.10.10",
-    "react-dom": "19.1.0",
-    "sass": "1.50",
-    "uuid": "^13.0.0",
-    "openapi-fetch": "^0.14.0",
-    "openapi-react-query": "^0.5.0"
-  },
-  "devDependencies": {
-    "@eslint/eslintrc": "^3",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "15.5.4",
-    "typescript": "^5",
-    "openapi-typescript": "^7.8.0"
-  }
+    "name": "mozerella",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "dev": "next dev --turbopack",
+        "dev-https": "next dev --experimental-https",
+        "build": "next build --turbopack",
+        "start": "next start",
+        "lint": "eslint",
+        "generate:ml": "openapi-typescript ./dependencies/swagger.json -o ./src/network/ml/generated.ts"
+    },
+    "dependencies": {
+        "@tanstack/react-query": "^5.90.2",
+        "@types/web-push": "^3.6.4",
+        "bootstrap": "^5.3.8",
+        "framer-motion": "^12.23.22",
+        "next": "15.5.4",
+        "openapi-fetch": "^0.14.0",
+        "openapi-react-query": "^0.5.0",
+        "react": "19.1.0",
+        "react-bootstrap": "^2.10.10",
+        "react-dom": "19.1.0",
+        "sass": "1.50",
+        "uuid": "^13.0.0",
+        "web-push": "^3.6.7"
+    },
+    "devDependencies": {
+        "@eslint/eslintrc": "^3",
+        "@types/node": "^20.19.19",
+        "@types/react": "^19",
+        "@types/react-dom": "^19",
+        "eslint": "^9",
+        "eslint-config-next": "15.5.4",
+        "openapi-typescript": "^7.8.0",
+        "typescript": "^5"
+    }
 }

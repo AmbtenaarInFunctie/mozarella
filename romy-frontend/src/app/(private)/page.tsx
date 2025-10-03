@@ -4,219 +4,427 @@ import { Navbar, Container, Nav, Row, Col, Button } from "react-bootstrap";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { v4 as uuid } from "uuid";
-// Simulated API call (replace with your real backend)
-async function fetchAIResponse(message: string): Promise<{ reply: string }> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({ reply: `ROmy: ${message.split("").reverse().join("")}` });
-    }, 500);
-  });
+import mlClient from "@/network/ml/clients";
+
+const postChatQuery = async (message: string) => {
+    const response = await mlClient.POST("/query", {
+        body: {
+            query: message,
+        },
+        headers: {
+            "Content-Type": "application/json",
+        },
+    });
+    console.log(response);
+    if (response.data) {
+        return response.data;
+    } else {
+        return {};
+    }
+};
+
+type HistoryMessage = {
+    role: string;
+    content: string;
+    citations: any[] | null;
+};
+
+type HistoryResponse = {
+    user_id: string;
+    messages: HistoryMessage[];
+    total_messages: number;
+    status: string;
+};
+
+const getHistory = async (id: string): Promise<HistoryResponse | null> => {
+    const response = await mlClient.GET("/history/{user_id}", {
+        params: { path: { user_id: id } } as any,
+    });
+    console.log(response);
+    if (response.data) {
+        return response.data as HistoryResponse;
+    } else {
+        return null;
+    }
+};
+
+function PushNotificationManager() {
+    const [isSupported, setIsSupported] = useState(false);
+    const [subscription, setSubscription] = useState<PushSubscription | null>(
+        null
+    );
+    const [message, setMessage] = useState("");
+
+    useEffect(() => {
+        if ("serviceWorker" in navigator && "PushManager" in window) {
+            setIsSupported(true);
+            registerServiceWorker();
+        }
+    }, []);
+
+    async function registerServiceWorker() {
+        const registration = await navigator.serviceWorker.register("/sw.js", {
+            scope: "/",
+            updateViaCache: "none",
+        });
+        const sub = await registration.pushManager.getSubscription();
+        setSubscription(sub);
+    }
+
+    async function subscribeToPush() {
+        const registration = await navigator.serviceWorker.ready;
+        const sub = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(
+                process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
+            ),
+        });
+        setSubscription(sub);
+        const serializedSub = JSON.parse(JSON.stringify(sub));
+        await subscribeUser(serializedSub);
+    }
+
+    async function unsubscribeFromPush() {
+        await subscription?.unsubscribe();
+        setSubscription(null);
+        await unsubscribeUser();
+    }
+
+    async function sendTestNotification() {
+        if (subscription) {
+            await sendNotification(message);
+            setMessage("");
+        }
+    }
+
+    if (!isSupported) {
+        return <p>Push notifications are not supported in this browser.</p>;
+    }
+
+    return (
+        <div>
+            <h3>Push Notificaties</h3>
+            {subscription ? (
+                <>
+                    <p>Notificaties zijn ingeschakeld</p>
+                    <button onClick={unsubscribeFromPush}>Uitschakelen</button>
+                    <input
+                        type="text"
+                        placeholder="Enter notification message"
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                    />
+                    <button onClick={sendTestNotification}>
+                        Verstuur test
+                    </button>
+                </>
+            ) : (
+                <>
+                    <p>Notificaties zijn uitgeschakeld</p>
+                    <button onClick={subscribeToPush}>Inschakelen</button>
+                </>
+            )}
+        </div>
+    );
 }
 
-function getCookie(cname: string) {
-  const name = cname + "=";
-  const ca = document.cookie.split(";");
-  for (let i = 0; i < ca.length; i++) {
-    let c = ca[i];
-    while (c.charAt(0) == " ") {
-      c = c.substring(1);
-    }
-    if (c.indexOf(name) == 0) {
-      return c.substring(name.length, c.length);
-    }
-  }
-  return null;
-}
+function InstallPrompt() {
+    const [isIOS, setIsIOS] = useState(false);
+    const [isStandalone, setIsStandalone] = useState(false);
 
-function getAllChats() {
-  return JSON.parse(getCookie("chats") ?? "[]");
+    useEffect(() => {
+        setIsIOS(
+            /iPad|iPhone|iPod/.test(navigator.userAgent) &&
+                !(window as any).MSStream
+        );
+
+        setIsStandalone(
+            window.matchMedia("(display-mode: standalone)").matches
+        );
+    }, []);
+
+    if (isStandalone) {
+        return null; // Don't show install button if already installed
+    }
+
+    return (
+        <div>
+            <h3>Install App</h3>
+            <button
+                onClick={() => {
+                    if (
+                        typeof window !== "undefined" &&
+                        "beforeinstallprompt" in window
+                    ) {
+                        (window as any).beforeinstallprompt.prompt();
+                    } else {
+                        alert("To install this app, use the browser's menu.");
+                    }
+                }}
+            >
+                Install PWA
+            </button>
+            {isIOS && (
+                <p>
+                    To install this app on your iOS device, tap the share button
+                    <span role="img" aria-label="share icon">
+                        {" "}
+                        ⎋{" "}
+                    </span>
+                    and then &quot;Add to Home Screen&quot;
+                    <span role="img" aria-label="plus icon">
+                        {" "}
+                        ➕{" "}
+                    </span>
+                    .
+                </p>
+            )}
+        </div>
+    );
 }
 
 export default function Home() {
-  const [selectedChat, setSelectedChat] = useState("");
+    const [chats, setChats] = useState<
+        { id: string; messages: ChatMessage[] }[]
+    >([]);
+    const [selectedChat, setSelectedChat] = useState("");
+    const [isClient, setIsClient] = useState(false);
 
-  async function createNewChat() {
-    const newUuid = uuid();
-    const x = getCookie("chats");
-    const updatedChats = [newUuid, ...getAllChats()];
+    // Initialize chats from localStorage on client mount
+    useEffect(() => {
+        setIsClient(true);
+        const storedChats = localStorage.getItem("chats");
 
-    document.cookie = `chats=${JSON.stringify(updatedChats)}; path=/; max-age=${
-      60 * 60 * 24 * 7
-    }`;
+        if (storedChats) {
+            const parsedChats = JSON.parse(storedChats);
+            if (parsedChats && parsedChats.length > 0) {
+                setChats(parsedChats);
+                setSelectedChat(parsedChats[0].id);
+            } else {
+                // Create initial chat if none exist
+                const newId = uuid();
+                const initialChat = [{ id: newId, messages: [] }];
+                setChats(initialChat);
+                setSelectedChat(newId);
+                localStorage.setItem("chats", JSON.stringify(initialChat));
+            }
+        } else {
+            // Create initial chat if none exist
+            const newId = uuid();
+            const initialChat = [{ id: newId, messages: [] }];
+            setChats(initialChat);
+            setSelectedChat(newId);
+            localStorage.setItem("chats", JSON.stringify(initialChat));
+        }
+    }, []);
 
-    setSelectedChat(newUuid);
-  }
+    // Save chats to localStorage whenever they change
+    useEffect(() => {
+        if (isClient && chats.length > 0) {
+            localStorage.setItem("chats", JSON.stringify(chats));
+        }
+    }, [chats, isClient]);
 
-  const [messages, setMessages] = useState<
-    { id: number; role: string; content: string }[]
-  >([]);
-  const [input, setInput] = useState("");
+    async function selectChat(id: string) {
+        console.log(id);
+        const currentChat = chats.find((x) => x.id === id);
 
-  const mutation = useMutation({
-    mutationFn: fetchAIResponse,
-    onSuccess: (data: { reply: string }) => {
-      setMessages((prev) => [
-        ...prev,
-        { id: Date.now(), role: "assistant", content: data.reply },
-      ]);
-    },
-  });
+        // Only load history if chat has no messages yet
+        if ((currentChat?.messages?.length ?? 0) === 0) {
+            const data = await getHistory(id);
 
-  function getMessagesFromChat(uuid: string) {
-    return JSON.parse(getCookie(`chat-${uuid}`) ?? "[]");
-  }
+            if (data && data.messages && Array.isArray(data.messages)) {
+                // Transform history messages to ChatMessage format
+                const transformedMessages = data.messages.map((msg, index) => ({
+                    id: Date.now() + index,
+                    role: msg.role,
+                    content: msg.content,
+                    citations: msg.citations || [],
+                }));
 
-  useEffect(() => {
-    document.cookie = `chat-${selectedChat}=${JSON.stringify(
-      messages
-    )}; path=/; max-age=${60 * 60 * 24 * 7}`;
-  }, [messages]);
+                setChats((prev) =>
+                    prev.map((chat) =>
+                        chat.id === id
+                            ? {
+                                  ...chat,
+                                  messages: transformedMessages,
+                              }
+                            : chat
+                    )
+                );
+            }
+        }
 
-  useEffect(() => {
-    setMessages(getMessagesFromChat(selectedChat));
-  }, [selectedChat]);
+        setSelectedChat(id);
+    }
 
-  const handleSend = () => {
-    if (!input.trim()) return;
-    const newMessage = { id: Date.now(), role: "user", content: input };
-    setMessages((prev) => [...prev, newMessage]);
-    mutation.mutate(input);
-    setInput("");
-  };
+    function createNewChat() {
+        const newId = uuid();
+        setChats((prev) => [{ id: newId, messages: [] }, ...prev]);
+        setSelectedChat(newId);
+    }
 
-  return (
-    <Row>
-      <input type="checkbox" className="show-hide-trigger" />
-      <Col xs={12} className="bg-white pt-3 vh-100 vw-100 show-hide-panel" id="chatHistory">
-        <h2>Antwoorden op jouw eerdere vragen</h2>
-        <ol>
-          {getAllChats().map((element: string) => {
-            return (
-              getMessagesFromChat(element).length > 0 && (
-                <li key={element} onClick={() => setSelectedChat(element)}>
-                  {element}
-                </li>
-              )
+    type ChatMessage = {
+        id: number;
+        role: string;
+        content: string;
+        citations: string[];
+    };
+
+    const [input, setInput] = useState("");
+
+    const mutation = useMutation({
+        mutationFn: postChatQuery,
+        onSuccess: (data: any) => {
+            console.log(data);
+
+            setChats((prev) =>
+                prev.map((chat) =>
+                    chat.id === selectedChat
+                        ? {
+                              ...chat,
+                              messages: [
+                                  ...chat.messages,
+                                  {
+                                      id: Date.now(),
+                                      role: "assistant",
+                                      content: data.response?.content || "",
+                                      citations: data.response?.citations || [],
+                                  },
+                              ],
+                          }
+                        : chat
+                )
             );
-          })}
-        </ol>
-        <Button onClick={createNewChat}>Stel een nieuwe vraag</Button>
-      </Col>
-      <Col xs={12}>
-        <div
-          className="d-flex flex-column vh-100 vw-100 mx-auto chat-canvas"
-          style={{ maxWidth: "100%" }}
-        >
-          <div className="flex-grow-1 overflow-auto p-3">
-            {messages.length > 0 ? (
-              messages.map((msg) => (
-                <motion.div
-                  key={msg.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className={`d-flex mb-2 ${
-                    msg.role === "user"
-                      ? "justify-content-start"
-                      : "justify-content-start"
-                  }`}
+        },
+    });
+
+    const handleSend = () => {
+        if (!input.trim()) return;
+        const newMessage: ChatMessage = {
+            id: Date.now(),
+            role: "user",
+            content: input,
+            citations: [],
+        };
+
+        console.log(newMessage);
+        setChats((prev) =>
+            prev.map((chat) =>
+                chat.id === selectedChat
+                    ? { ...chat, messages: [...chat.messages, newMessage] }
+                    : chat
+            )
+        );
+        mutation.mutate(input);
+        setInput("");
+    };
+
+    // Prevent hydration mismatch by not rendering until client-side
+    if (!isClient || chats.length === 0) {
+        return null;
+    }
+
+    return (
+        <Row>
+            {/* <InstallPrompt />
+            <PushNotificationManager /> */}
+            <Col xs={3} className="text-center pt-5 border">
+                <Button onClick={createNewChat}>New chat</Button>
+                {chats.map((element) => {
+                    const firstUserMessage = element.messages.find(
+                        (msg) => msg.role === "user"
+                    );
+                    const displayText = firstUserMessage
+                        ? firstUserMessage.content.slice(0, 50) +
+                          (firstUserMessage.content.length > 50 ? "..." : "")
+                        : "New Chat";
+
+                    return (
+                        <p
+                            key={element.id}
+                            onClick={() => selectChat(element.id)}
+                            className={`cursor-pointer p-2 ${
+                                selectedChat === element.id
+                                    ? "bg-light fw-bold"
+                                    : ""
+                            }`}
+                            style={{
+                                cursor: "pointer",
+                                textAlign: "left",
+                                wordBreak: "break-word",
+                            }}
+                        >
+                            {displayText}
+                        </p>
+                    );
+                })}
+            </Col>
+            <Col xs={9}>
+                <div
+                    className="d-flex flex-column vh-100 mx-auto background-red "
+                    style={{ maxWidth: "1000px" }}
                 >
-                  <div
-                    className={`rounded border-0 p-3 romy-chat fs-5 ${
-                      msg.role === "user"
-                        ? "bg-success"
-                        : "bg-white border"
-                    }`}
-                    style={{ maxWidth: "70%" }}
-                  >
-                    {msg.content}
-                  </div>
-                </motion.div>
-              ))
-            ) : (
-              <h2>Hoi, hoe kan ik je helpen?</h2>
-            )}
+                    <div className="flex-grow-1 overflow-auto p-3">
+                        {(chats.find((x) => x.id === selectedChat)?.messages
+                            ?.length ?? 0) > 0 ? (
+                            chats
+                                .find((x) => x.id === selectedChat)
+                                ?.messages?.map((chat: ChatMessage) => (
+                                    <motion.div
+                                        key={chat.id}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ duration: 0.3 }}
+                                        className={`d-flex mb-2 ${
+                                            chat.role === "user"
+                                                ? "justify-content-end"
+                                                : "justify-content-start"
+                                        }`}
+                                    >
+                                        <div
+                                            className={`p-2 rounded shadow-sm text-wrap ${
+                                                chat.role === "user"
+                                                    ? "bg-success text-white"
+                                                    : "bg-white border"
+                                            }`}
+                                            style={{ maxWidth: "70%" }}
+                                        >
+                                            {chat.content}
+                                        </div>
+                                    </motion.div>
+                                ))
+                        ) : (
+                            <h2 className="text-center align-middle">
+                                Hoe kan ik u helpen?
+                            </h2>
+                        )}
 
-            {mutation.isPending && (
-              <div className="text-muted small">ROmy schrijft…</div>
-            )}
-          </div>
+                        {mutation.isPending && (
+                            <div className="text-muted small">
+                                ROmy is aan het denken en schrijven...
+                            </div>
+                        )}
+                    </div>
 
-          {/* Input */}
-          <div className="p-3 bg-white d-flex gap-3">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              placeholder="Waar kan ik je mee helpen?"
-              className="border-2 form-control fs-5 p-3"
-            />
-            <Button onClick={handleSend} className="btn fs-5 btn-primary">
-              Stel je vraag
-            </Button>
-          </div>
-        </div>
-      </Col>
-    </Row>
-  );
-
-  return <div></div>;
-
-  // return (
-  //   <div>
-  //     {/* Header */}
-  //     <Navbar bg="dark" variant="dark" expand="lg">
-  //       <Container>
-  //         <Navbar.Brand href="#home">MyLandingPage</Navbar.Brand>
-  //         <Navbar.Toggle aria-controls="basic-navbar-nav" />
-  //         <Navbar.Collapse id="basic-navbar-nav">
-  //           <Nav className="ms-auto">
-  //             <Nav.Link href="#home">Home</Nav.Link>
-  //             <Nav.Link href="#features">Features</Nav.Link>
-  //             <Nav.Link href="#contact">Contact</Nav.Link>
-  //           </Nav>
-  //         </Navbar.Collapse>
-  //       </Container>
-  //     </Navbar>
-
-  //     {/* Main Content */}
-  //     <Container className="flex-grow-1 d-flex flex-column justify-content-center my-5">
-  //       <Row className="text-center mb-4">
-  //         <Col>
-  //           <h1>Welcome to Our Landing Page</h1>
-  //           <p>Discover the features and benefits of our product.</p>
-  //           <Button variant="primary">Get Started</Button>
-  //         </Col>
-  //       </Row>
-  //       <Row>
-  //         <Col md={4} className="mb-3">
-  //           <div className="p-4 border rounded h-100">
-  //             <h3>Feature One</h3>
-  //             <p>Explain the first feature of your product here.</p>
-  //           </div>
-  //         </Col>
-  //         <Col md={4} className="mb-3">
-  //           <div className="p-4 border rounded h-100">
-  //             <h3>Feature Two</h3>
-  //             <p>Explain the second feature of your product here.</p>
-  //           </div>
-  //         </Col>
-  //         <Col md={4} className="mb-3">
-  //           <div className="p-4 border rounded h-100">
-  //             <h3>Feature Three</h3>
-  //             <p>Explain the third feature of your product here.</p>
-  //           </div>
-  //         </Col>
-  //       </Row>
-  //     </Container>
-
-  //     {/* Footer */}
-  //     <footer className="bg-dark text-white text-center py-4">
-  //       <Container>
-  //         <p>&copy; 2025 MyLandingPage. All rights reserved.</p>
-  //       </Container>
-  //     </footer>
-  //   </div>
-  // );
+                    <div className="p-3 border-top bg-white d-flex gap-2">
+                        <input
+                            type="text"
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                            placeholder="Type a message..."
+                            className="form-control"
+                        />
+                        <Button
+                            onClick={handleSend}
+                            className="btn btn-primary"
+                        >
+                            Send
+                        </Button>
+                    </div>
+                </div>
+            </Col>
+        </Row>
+    );
 }
