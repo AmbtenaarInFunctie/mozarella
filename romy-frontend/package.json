@@ -21,6 +21,7 @@
         "react": "19.1.0",
         "react-bootstrap": "^2.10.10",
         "react-dom": "19.1.0",
+        "react-markdown": "^10.1.0",
         "sass": "1.50",
         "uuid": "^13.0.0",
         "web-push": "^3.6.7"
