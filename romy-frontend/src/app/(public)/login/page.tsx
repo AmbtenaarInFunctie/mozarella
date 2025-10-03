@@ -31,27 +31,28 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{ maxWidth: "400px", margin: "auto", paddingTop: "50px" }}>
-      <h1>Login</h1>
+    <div style={{ maxWidth: "400px", margin: "auto", paddingTop: "128px" }}>
+      <h1 style={{marginBottom: "16px"}}>Inloggen</h1>
       <form onSubmit={handleLogin}>
         <input
+          className="border-2 form-control mb-3 p-3"
           type="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          style={{ width: "100%", marginBottom: "10px", padding: "8px" }}
         />
         <input
+          className="border-2 form-control mb-3 p-3"
           type="password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          style={{ width: "100%", marginBottom: "10px", padding: "8px" }}
+          style={{ width: "100%", marginBottom: "16px", padding: "8px" }}
         />
-        <button type="submit" style={{ width: "100%", padding: "8px" }}>
-          Login
+        <button type="submit" className="btn fs-5 btn-primary">
+          Log in
         </button>
       </form>
       {error && <p style={{ color: "red" }}>{error}</p>}

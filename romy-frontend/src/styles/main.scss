@@ -1,6 +1,69 @@
+@font-face {
+    font-family: 'RijksSansRegular';
+    src: url('fonts/RijksSansVF-Regular.ttf') format('truetype');
+}
+
 // change the theme
 $primary: #01689b;
 $danger: #ff00ff;
+$success: #eff7fc;
+$font-family-base: 'RijksSansRegular', sans-serif;
 
 // Import Bootstrap and its default variables
 @import "~bootstrap/scss/bootstrap.scss";
+
+body {
+    background: url(img/ro-logo.svg) no-repeat top center;
+    overflow: hidden;
+}
+.chat-canvas {
+    padding-top: 112px;
+}
+button {
+    font-weight: 500 !important;
+}
+.form-control {
+    border-color: #007bc7;
+    font-weight: 500;
+}
+.romy-chat {
+    font-weight: 500;
+}
+.romy-chat.bg-success::before {
+    content: 'Ik: ';
+}
+.show-hide-panel {
+    margin-top: 112px;
+    position: absolute;
+}
+.show-hide-trigger {
+    visibility: hidden;
+}
+.show-hide-trigger::after {
+    background-image: url('img/klok.svg');
+    content: '';
+    display: inline-block;
+    height: 1.5em;
+    left: 1.5em;
+    position: absolute;
+    top: 1em;
+    visibility: visible;
+    width: 1.5em;
+ }
+.show-hide-trigger ~ .show-hide-panel {
+    transform: translateX(-100%);
+    transition-property: translateX();
+    transition-duration: .8s;
+}
+.show-hide-trigger:checked ~ .show-hide-panel {
+    transform: translateX(1.5em);
+    transition-property: translateX();
+    transition-duration: .4s;
+}
+#chatHistory li {
+    font-weight: 500 !important;
+}
+.row > * {
+    max-width: unset;
+    width: unset;
+}

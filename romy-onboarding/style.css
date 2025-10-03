@@ -1,0 +1,22 @@
+@font-face {
+    font-family: 'RijksSansRegular';
+    src: url('../romy-frontend/src/styles/fonts/RijksSansVF-Regular.ttf') format('truetype');
+}
+body {
+    background: #fff url('../romy-frontend/src/styles/img/ro-logo.svg') no-repeat center top;
+    color: #3b3b3b;
+    font-family: RijksSansRegular, sans-serif;
+}
+main {
+    background: #fff url('../romy-frontend/src/styles/img/romy.svg') no-repeat center;
+    /* height: 100vh; */
+    text-align: center;
+}
+h1 {
+    font-size: 3em;
+    margin-top: 128px;
+}
+p {
+    font-size: 1.5em;
+    margin-top: 16px;
+}

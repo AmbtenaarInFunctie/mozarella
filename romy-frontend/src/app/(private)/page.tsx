@@ -8,7 +8,7 @@ import { v4 as uuid } from "uuid";
 async function fetchAIResponse(message: string): Promise<{ reply: string }> {
   return new Promise((resolve) => {
     setTimeout(() => {
-      resolve({ reply: `🤖 AI says: ${message.split("").reverse().join("")}` });
+      resolve({ reply: `ROmy: ${message.split("").reverse().join("")}` });
     }, 500);
   });
 }
@@ -86,22 +86,26 @@ export default function Home() {
 
   return (
     <Row>
-      <Col xs={3} className="text-center pt-5 border">
-        <Button onClick={createNewChat}>New chat</Button>
-        {getAllChats().map((element: string) => {
-          return (
-            getMessagesFromChat(element).length > 0 && (
-              <p key={element} onClick={() => setSelectedChat(element)}>
-                {element}
-              </p>
-            )
-          );
-        })}
+      <input type="checkbox" className="show-hide-trigger" />
+      <Col xs={12} className="bg-white pt-3 vh-100 vw-100 show-hide-panel" id="chatHistory">
+        <h2>Antwoorden op jouw eerdere vragen</h2>
+        <ol>
+          {getAllChats().map((element: string) => {
+            return (
+              getMessagesFromChat(element).length > 0 && (
+                <li key={element} onClick={() => setSelectedChat(element)}>
+                  {element}
+                </li>
+              )
+            );
+          })}
+        </ol>
+        <Button onClick={createNewChat}>Stel een nieuwe vraag</Button>
       </Col>
-      <Col xs={9}>
+      <Col xs={12}>
         <div
-          className="d-flex flex-column vh-100 mx-auto background-red "
-          style={{ maxWidth: "1000px" }}
+          className="d-flex flex-column vh-100 vw-100 mx-auto chat-canvas"
+          style={{ maxWidth: "100%" }}
         >
           <div className="flex-grow-1 overflow-auto p-3">
             {messages.length > 0 ? (
@@ -113,14 +117,14 @@ export default function Home() {
                   transition={{ duration: 0.3 }}
                   className={`d-flex mb-2 ${
                     msg.role === "user"
-                      ? "justify-content-end"
+                      ? "justify-content-start"
                       : "justify-content-start"
                   }`}
                 >
                   <div
-                    className={`p-2 rounded shadow-sm text-wrap ${
+                    className={`rounded border-0 p-3 romy-chat fs-5 ${
                       msg.role === "user"
-                        ? "bg-success text-white"
+                        ? "bg-success"
                         : "bg-white border"
                     }`}
                     style={{ maxWidth: "70%" }}
@@ -130,26 +134,26 @@ export default function Home() {
                 </motion.div>
               ))
             ) : (
-              <h2 className="text-center align-middle">Hoe kan ik u helpen?</h2>
+              <h2>Hoi, hoe kan ik je helpen?</h2>
             )}
 
             {mutation.isPending && (
-              <div className="text-muted small">AI is typing...</div>
+              <div className="text-muted small">ROmy schrijft…</div>
             )}
           </div>
 
           {/* Input */}
-          <div className="p-3 border-top bg-white d-flex gap-2">
+          <div className="p-3 bg-white d-flex gap-3">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              placeholder="Type a message..."
-              className="form-control"
+              placeholder="Waar kan ik je mee helpen?"
+              className="border-2 form-control fs-5 p-3"
             />
-            <Button onClick={handleSend} className="btn btn-primary">
-              Send
+            <Button onClick={handleSend} className="btn fs-5 btn-primary">
+              Stel je vraag
             </Button>
           </div>
         </div>

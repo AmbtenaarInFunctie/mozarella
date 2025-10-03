@@ -1,0 +1,25 @@
+{
+  "pages": {
+    "/(private)/page": [
+      "static/chunks/bc525_next_dist_5f951818._.js",
+      "static/chunks/romy-frontend_src_app_favicon_ico_mjs_59f39511._.js",
+      "static/chunks/[root-of-the-server]__efedcea7._.css",
+      "static/chunks/bc525_588619eb._.js",
+      "static/chunks/romy-frontend_src_app_8c640ead._.js",
+      "static/chunks/romy-frontend_src_app_layout_tsx_923aaec5._.js",
+      "static/chunks/bc525_next_dist_client_components_builtin_global-error_078b216d.js",
+      "static/chunks/bc525_7db4413f._.js",
+      "static/chunks/romy-frontend_src_app_(private)_page_tsx_d5a13eff._.js",
+      "static/chunks/romy-frontend_src_app_(private)_page_tsx_078b216d._.js",
+      "static/chunks/[turbopack]_browser_dev_hmr-client_hmr-client_ts_15a57916._.js",
+      "static/chunks/bc525_next_dist_compiled_react-dom_621ce49c._.js",
+      "static/chunks/bc525_next_dist_compiled_next-devtools_index_08628e86.js",
+      "static/chunks/bc525_next_dist_compiled_2136ac1f._.js",
+      "static/chunks/bc525_next_dist_client_51a7927e._.js",
+      "static/chunks/bc525_next_dist_efa84a3a._.js",
+      "static/chunks/bc525_@swc_helpers_cjs_82329479._.js",
+      "static/chunks/romy-frontend_a0ff3932._.js",
+      "static/chunks/turbopack-romy-frontend_8d60a99d._.js"
+    ]
+  }
+}

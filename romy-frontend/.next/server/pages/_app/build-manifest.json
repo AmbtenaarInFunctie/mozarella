@@ -1,0 +1,24 @@
+{
+  "devFiles": [],
+  "ampDevFiles": [],
+  "polyfillFiles": [],
+  "lowPriorityFiles": [],
+  "rootMainFiles": [],
+  "pages": {
+    "/_app": [
+      "static/chunks/bc525_next_dist_compiled_next-devtools_index_2cf49d9d.js",
+      "static/chunks/bc525_next_dist_compiled_cdd22110._.js",
+      "static/chunks/bc525_next_dist_shared_lib_1673966d._.js",
+      "static/chunks/bc525_next_dist_client_81d53f6e._.js",
+      "static/chunks/bc525_next_dist_af8e23df._.js",
+      "static/chunks/bc525_next_app_23f061ae.js",
+      "static/chunks/[next]_entry_page-loader_ts_a43b742a._.js",
+      "static/chunks/bc525_react-dom_c8debd91._.js",
+      "static/chunks/bc525_73b74bb3._.js",
+      "static/chunks/[root-of-the-server]__9ca610e0._.js",
+      "static/chunks/romy-frontend_pages__app_2da965e7._.js",
+      "static/chunks/turbopack-romy-frontend_pages__app_9c516c81._.js"
+    ]
+  },
+  "ampFirstPages": []
+}

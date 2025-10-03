@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 3, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"","debugId":null}},
+    {"offset": {"line": 55, "column": 0}, "map": {"version":3,"sources":["file:///Users/rogierbarendregt/Documents/GitHub/mozarella/romy-frontend/src/app/api/login/route.ts"],"sourcesContent":["import { NextResponse } from \"next/server\";\n\nexport async function POST(req) {\n  const { email, password } = await req.json();\n\n  // Mock user\n  const mockUser = {\n    email: \"test@example.com\",\n    password: \"password123\",\n    name: \"John Doe\",\n    token: \"fake-jwt-token\",\n  };\n\n  if (email === mockUser.email && password === mockUser.password) {\n    return NextResponse.json({ user: mockUser });\n  } else {\n    return NextResponse.json(\n      { message: \"Invalid email or password\" },\n      { status: 401 }\n    );\n  }\n}\n"],"names":[],"mappings":";;;;AAAA;;AAEO,eAAe,KAAK,GAAG;IAC5B,MAAM,EAAE,KAAK,EAAE,QAAQ,EAAE,GAAG,MAAM,IAAI,IAAI;IAE1C,YAAY;IACZ,MAAM,WAAW;QACf,OAAO;QACP,UAAU;QACV,MAAM;QACN,OAAO;IACT;IAEA,IAAI,UAAU,SAAS,KAAK,IAAI,aAAa,SAAS,QAAQ,EAAE;QAC9D,OAAO,oKAAY,CAAC,IAAI,CAAC;YAAE,MAAM;QAAS;IAC5C,OAAO;QACL,OAAO,oKAAY,CAAC,IAAI,CACtB;YAAE,SAAS;QAA4B,GACvC;YAAE,QAAQ;QAAI;IAElB;AACF","debugId":null}}]
+}
