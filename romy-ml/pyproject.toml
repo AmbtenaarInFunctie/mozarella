@@ -1,0 +1,20 @@
+[project]
+name = "hackwerk2025"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "flashrank>=0.2.10",
+    "langgraph>=0.6.8",
+    "modelscope>=1.30.0",
+    "openai>=2.0.1",
+    "torch>=2.8.0",
+    "torchvision>=0.23.0",
+    "transformers>=4.56.2",
+    "numpy>=1.26.0",
+    "faiss-cpu>=1.12.0",
+    "langchain-anthropic>=0.3.21",
+    "langchain>=0.3.27",
+    "langchain-openai>=0.3.34",
+]
