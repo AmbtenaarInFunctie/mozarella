@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { v4 as uuid } from "uuid";
 import mlClient from "@/network/ml/clients";
 
-const fetchAIResponse = async (message: string) => {
+const postChatQuery = async (message: string) => {
     const response = await mlClient.POST("/query", {
         body: {
             query: message,
@@ -274,7 +274,7 @@ export default function Home() {
     const [input, setInput] = useState("");
 
     const mutation = useMutation({
-        mutationFn: fetchAIResponse,
+        mutationFn: postChatQuery,
         onSuccess: (data: any) => {
             console.log(data);
 
