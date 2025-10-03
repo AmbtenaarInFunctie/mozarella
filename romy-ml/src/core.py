@@ -51,6 +51,10 @@ class Core:
         query_embeddings = await self.embedding_model.embed_text(query)
         support_docs = self.faiss_vectordb.search(query_embeddings, k=10)
         return await self.model.run(query, support_docs, user_id)
+    
+    def get_conversation_history(self, user_id: str) -> list[dict[str, str]]:
+        """Get conversation history for a specific user/thread ID"""
+        return self.model.get_conversation_history(user_id)
 
 if __name__ == "__main__":
     import asyncio

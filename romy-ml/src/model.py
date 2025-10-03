@@ -33,10 +33,17 @@ class Model:
         """Get conversation history for user"""
         return self._conversation_history.setdefault(user_id, [])
     
-    def _add_to_history(self, user_id: str, role: str, content: str):
+    def get_conversation_history(self, user_id: str) -> List[Dict[str, str]]:
+        """Public method to get conversation history for user"""
+        return self._get_conversation_history(user_id)
+    
+    def _add_to_history(self, user_id: str, role: str, content: str, citations: list = None):
         """Add message to conversation history"""
         history = self._get_conversation_history(user_id)
-        history.append({"role": role, "content": content})
+        message_data = {"role": role, "content": content}
+        if citations is not None:
+            message_data["citations"] = citations
+        history.append(message_data)
         if len(history) > 10:
             self._conversation_history[user_id] = history[-10:]
 
@@ -144,7 +151,9 @@ class Model:
         response = ModelResponse(**response_json)
         
         self._add_to_history(user_id, "user", query)
-        self._add_to_history(user_id, "assistant", response.content)
+        # Convert Citation objects to dicts for storage
+        citations_dict = [citation.model_dump() for citation in response.citations] if response.citations else None
+        self._add_to_history(user_id, "assistant", response.content, citations_dict)
         
         return response
 

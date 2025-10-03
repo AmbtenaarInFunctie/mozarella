@@ -30,3 +30,16 @@ class QueryResponse(BaseModel):
     response: Any
     citations: Optional[List[Dict[str, Any]]] = None
     status: str = "success"
+
+class Message(BaseModel):
+    """Represents a single message in conversation history"""
+    role: str  # "user" or "assistant"
+    content: str
+    citations: Optional[List[Citation]] = None  # Citations only present in assistant messages
+
+class ConversationHistoryResponse(BaseModel):
+    """Response model for conversation history"""
+    user_id: str
+    messages: List[Message]
+    total_messages: int
+    status: str = "success"
